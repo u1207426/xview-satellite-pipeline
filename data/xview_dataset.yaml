@@ -1,0 +1,13 @@
+# data/xview_dataset.yaml
+# Fill in actual paths after running converters.py
+path: data/processed/tiles_640   # root dir
+train: train/images
+val: val/images
+test: test/images
+
+nc: 4  # number of classes
+names:
+  - aircraft
+  - storage_tank
+  - vehicle_lot
+  - building
