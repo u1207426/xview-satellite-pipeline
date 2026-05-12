@@ -23,6 +23,8 @@ class L1Detector:
 
     def __init__(self, checkpoint_path: Optional[str] = None):
         model_path = checkpoint_path or "yolov8m.pt"
+        if YOLO is None:
+            raise ImportError("ultralytics is required for L1Detector. Install with: pip install ultralytics")
         self.model = YOLO(model_path)
 
     def train(self, config_path: str, data_yaml: str) -> None:
