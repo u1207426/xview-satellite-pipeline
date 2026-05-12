@@ -1,0 +1,9 @@
+data/raw/
+data/processed/
+checkpoints/
+experiments/
+outputs/
+__pycache__/
+*.pyc
+.env
+wandb/
