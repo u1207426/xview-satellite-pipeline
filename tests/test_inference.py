@@ -66,6 +66,7 @@ def test_predict_result_json_structure(monkeypatch, tmp_path):
     assert "l2_result" in result
     assert "military_probability" in result["l2_result"]
     assert "classification" in result["l2_result"]
+    assert "confidence_level" in result["l2_result"]
 
 
 def test_predict_high_probability_classified_military(monkeypatch, tmp_path):

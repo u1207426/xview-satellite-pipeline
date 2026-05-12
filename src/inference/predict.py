@@ -90,7 +90,8 @@ def predict(
     """
     image_path = Path(image_path)
     location_id = location_id or image_path.stem
-    timestamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+    _now = datetime.now()
+    timestamp = _now.strftime("%Y%m%dT%H%M%S")
     run_dir = Path(output_dir) / f"{location_id}_{timestamp}"
     run_dir.mkdir(parents=True, exist_ok=True)
 
@@ -127,7 +128,7 @@ def predict(
     result = {
         "location_id": location_id,
         "image_path": str(image_path),
-        "timestamp": datetime.now().isoformat(timespec="seconds"),
+        "timestamp": _now.isoformat(timespec="seconds"),
         "l1_detections": [
             {"class": d.class_name,
              "confidence": round(d.confidence, 4),
