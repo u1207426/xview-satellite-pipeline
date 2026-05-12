@@ -1,0 +1,30 @@
+xview:
+  raw_image_dir: data/raw/xview/train_images
+  geojson_path: data/raw/xview/xView_train.geojson
+  tiles_640_dir: data/processed/tiles_640
+  tiles_1024_dir: data/processed/tiles_1024
+  yolo_labels_dir: data/annotations/yolo_format
+  # Verify class IDs against xview_class_labels.txt from xView dataset download
+  class_map:
+    11: aircraft     # Fixed-wing Aircraft
+    12: aircraft     # Small Aircraft
+    15: aircraft     # Helicopter
+    23: storage_tank # Storage Tank
+    53: vehicle_lot  # Parking Lot
+    72: vehicle_lot  # Vehicle Lot
+    17: building     # Building (requires manual post-filtering)
+
+our_classes:
+  - aircraft
+  - storage_tank
+  - vehicle_lot
+  - building
+
+l2:
+  image_dir: data/processed/tiles_1024
+  features_dir: data/annotations/l2_features
+  labels_dir: data/annotations/location_labels
+  # labels CSV format: filename,label (0=non_military,1=military)
+  train_labels: data/annotations/location_labels/train.csv
+  val_labels: data/annotations/location_labels/val.csv
+  test_labels: data/annotations/location_labels/test.csv

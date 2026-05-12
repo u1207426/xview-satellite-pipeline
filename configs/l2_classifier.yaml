@@ -1,0 +1,11 @@
+backbone: facebook/vit-mae-base
+# Replace with SatMAE weights when available, e.g.: MathFarm/SatMAE
+freeze_backbone_epochs: 5
+unfreeze_last_n_blocks: 4
+lr_backbone: 0.00001
+lr_head: 0.001
+loss: BCEWithLogitsLoss
+pos_weight: 3.0
+epochs: 50
+batch_size: 16
+num_workers: 4
