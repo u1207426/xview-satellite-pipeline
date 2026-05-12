@@ -41,6 +41,9 @@ def tile_image(
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    if overlap >= tile_size:
+        raise ValueError(f"overlap ({overlap}) must be less than tile_size ({tile_size})")
+
     if image_path.suffix.lower() in (".tif", ".tiff") and HAS_RASTERIO:
         return _tile_geotiff(image_path, output_dir, tile_size, overlap)
     return _tile_pil(image_path, output_dir, tile_size, overlap)
@@ -86,6 +89,7 @@ def _tile_geotiff(
                 data = data.transpose(1, 2, 0)
                 if n_bands == 1:
                     data = np.stack([data[:, :, 0]] * 3, axis=-1)
+                # GeoTIFF tiles saved as JPEG for compactness; PIL path preserves source extension
                 out = output_dir / f"{image_path.stem}_r{row}_c{col}.jpg"
                 Image.fromarray(data).save(out)
                 tiles.append(TileInfo(str(out), str(image_path), tile_size, row, col, x, y))

@@ -75,3 +75,23 @@ def test_tile_pixel_content():
         tr_img = Image.open(tr.tile_path)
         assert tl_img.getpixel((0, 0)) == (255, 0, 0)
         assert tr_img.getpixel((0, 0)) == (0, 255, 0)
+
+
+def test_tile_overlap_increases_count():
+    with tempfile.TemporaryDirectory() as tmp:
+        img_path = os.path.join(tmp, "test.jpg")
+        make_test_image(img_path, (1280, 640))
+        # With no overlap: 2 tiles (640+640=1280 exact fit)
+        tiles_no_overlap = tile_image(img_path, os.path.join(tmp, "no_overlap"), tile_size=640, overlap=0)
+        # With overlap=320: stride=320, so tiles at x=0 and x=320 and x=640 → 3 tiles in x
+        tiles_overlap = tile_image(img_path, os.path.join(tmp, "overlap"), tile_size=640, overlap=320)
+        assert len(tiles_no_overlap) == 2
+        assert len(tiles_overlap) == 3
+
+
+def test_overlap_gte_tile_size_raises():
+    with tempfile.TemporaryDirectory() as tmp:
+        img_path = os.path.join(tmp, "test.jpg")
+        make_test_image(img_path, (1280, 1280))
+        with pytest.raises(ValueError, match="overlap"):
+            tile_image(img_path, os.path.join(tmp, "tiles"), tile_size=640, overlap=640)
