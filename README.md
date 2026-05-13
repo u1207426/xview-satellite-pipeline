@@ -1,71 +1,71 @@
-# xView Satellite AI Pipeline
+# xView 衛星影像 AI Pipeline
 
-A two-stage pipeline for military facility detection and classification in satellite imagery, built on the [xView dataset](http://xviewdataset.org).
+基於 [xView 資料集](http://xviewdataset.org) 的兩階段衛星影像軍事設施偵測與分類系統。
 
-## Architecture
+## 架構
 
 ```
-Satellite Image
-      │
-      ▼
+衛星影像
+    │
+    ▼
 ┌─────────────┐
-│  L1 Detector │  YOLOv11m — detects aircraft, storage tanks, vehicle lots, buildings
+│  L1 偵測器  │  YOLOv11m — 偵測航空器、儲油槽、車輛停放區、建築物
 └─────────────┘
-      │  detections + 31-dim structural features
-      ▼
+    │  偵測結果 + 31 維結構特徵向量
+    ▼
 ┌─────────────┐
-│ L2 Classifier│  SatMAE ViT-Base + MLP fusion — P(military facility)
+│  L2 分類器  │  SatMAE ViT-Base + MLP 融合 — P(軍事設施)
 └─────────────┘
-      │
-      ▼
+    │
+    ▼
 annotated.jpg · result.json · report.html
 ```
 
-**L1** fine-tunes YOLOv11m on 4 xView object classes across 640×640 tiles.  
-**L2** fuses a ViT image branch with a 31-dim structural feature vector (class counts, spatial distribution, confidence statistics) to classify whether a location is a military facility.
+**L1** 以 640×640 tiles 對 xView 4 個物件類別進行 YOLOv11m fine-tune。  
+**L2** 將 ViT 影像特徵與 31 維結構特徵向量（類別計數、空間分布、信心統計）融合，判斷該地點是否為軍事設施。
 
-## Project Structure
+## 專案結構
 
 ```
 defence-satellite-pipeline/
 ├── configs/
-│   ├── l1_yolo11.yaml          # L1 training hyperparameters
-│   ├── l2_classifier.yaml      # L2 training hyperparameters
-│   └── data_sources.yaml       # Dataset paths and class mappings
+│   ├── l1_yolo11.yaml          # L1 訓練超參數
+│   ├── l2_classifier.yaml      # L2 訓練超參數
+│   └── data_sources.yaml       # 資料集路徑與類別對應
 ├── src/
 │   ├── data/
-│   │   ├── tiling.py           # Large image → 640/1024px tile slicing
-│   │   ├── converters.py       # xView GeoJSON → YOLO label format
-│   │   └── dataset.py          # L2 PyTorch Dataset (image + structural features)
+│   │   ├── tiling.py           # 大圖切割為 640/1024px tiles
+│   │   ├── converters.py       # xView GeoJSON → YOLO 標籤格式
+│   │   └── dataset.py          # L2 PyTorch Dataset（影像 + 結構特徵）
 │   ├── models/
 │   │   ├── l1_detector.py      # YOLOv11m wrapper
-│   │   ├── l2_classifier.py    # ViT-Base + MLP fusion classifier
-│   │   └── feature_extractor.py# 31-dim structural feature extraction
+│   │   ├── l2_classifier.py    # ViT-Base + MLP 融合分類器
+│   │   └── feature_extractor.py# 31 維結構特徵提取
 │   ├── training/
-│   │   ├── train_l1.py         # L1 training entry point
-│   │   └── train_l2.py         # L2 training + L1 feature caching
+│   │   ├── train_l1.py         # L1 訓練入口
+│   │   └── train_l2.py         # L2 訓練 + L1 特徵快取
 │   ├── evaluation/
-│   │   └── metrics.py          # AUC-ROC, F1, confusion matrix
+│   │   └── metrics.py          # AUC-ROC、F1、混淆矩陣
 │   └── inference/
-│       └── predict.py          # End-to-end inference on a single image
+│       └── predict.py          # 單張影像端到端推論
 ├── notebooks/
-│   └── colab_training.ipynb    # Full training pipeline for Google Colab T4
-└── tests/                      # 42 pytest tests
+│   └── colab_training.ipynb    # Google Colab T4 完整訓練流程
+└── tests/                      # 42 個 pytest 測試
 ```
 
-## Quickstart (Local)
+## 快速開始（本地）
 
-### Prerequisites
+### 環境需求
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Requires Python 3.9+, PyTorch 2.0+, CUDA recommended.
+需要 Python 3.9+、PyTorch 2.0+，建議使用 CUDA GPU。
 
-### 1. Prepare Data
+### 1. 準備資料
 
-Download the xView dataset from [xviewdataset.org](http://xviewdataset.org) (registration required) and place files at:
+前往 [xviewdataset.org](http://xviewdataset.org) 申請下載 xView 資料集（需填表申請），解壓後放置於：
 
 ```
 data/raw/xview/
@@ -73,7 +73,7 @@ data/raw/xview/
 └── xView_train.geojson
 ```
 
-Convert annotations and tile images:
+轉換標籤格式並切割影像：
 
 ```bash
 python - <<'EOF'
@@ -88,7 +88,7 @@ convert_xview_to_yolo(
 EOF
 ```
 
-### 2. Train L1 (YOLOv11m)
+### 2. L1 訓練（YOLOv11m）
 
 ```bash
 python -m src.training.train_l1 \
@@ -96,9 +96,9 @@ python -m src.training.train_l1 \
   --data data/xview_dataset.yaml
 ```
 
-Checkpoint saved to `checkpoints/l1/weights/best.pt`.
+最佳 checkpoint 儲存於 `checkpoints/l1/weights/best.pt`。
 
-### 3. Cache L1 Features & Train L2
+### 3. 快取 L1 特徵並訓練 L2
 
 ```bash
 python -m src.training.train_l2 \
@@ -110,7 +110,7 @@ python -m src.training.train_l2 \
   --val-labels   data/annotations/location_labels/val.csv
 ```
 
-L2 label CSV format:
+L2 標籤 CSV 格式：
 
 ```
 image_name,label
@@ -118,9 +118,9 @@ image_name,label
 1234.tif,1
 ```
 
-`1` = military facility, `0` = non-military.
+`1` = 軍事設施，`0` = 非軍事。
 
-### 4. Inference
+### 4. 推論
 
 ```bash
 python -m src.inference.predict \
@@ -129,77 +129,77 @@ python -m src.inference.predict \
   --l2-checkpoint checkpoints/l2/best.pt
 ```
 
-Outputs written to `outputs/<location_id>_<timestamp>/`:
+結果輸出至 `outputs/<location_id>_<timestamp>/`：
 
-| File | Content |
+| 檔案 | 內容 |
 |---|---|
-| `annotated.jpg` | Image with L1 bounding boxes |
-| `result.json` | All detections + L2 probability |
-| `report.html` | Human-readable analysis report |
+| `annotated.jpg` | 標有 L1 偵測框的影像 |
+| `result.json` | 完整偵測結果 + L2 機率 |
+| `report.html` | 人工可讀分析報告 |
 
-**Confidence thresholds:**
+**信心閾值規則：**
 
-| P(military) | Classification | Level |
+| P(軍事) | 分類 | 等級 |
 |---|---|---|
-| ≥ 0.8 | military | high |
-| 0.6 – 0.8 | military | medium |
-| 0.4 – 0.6 | uncertain | low |
-| < 0.4 | non-military | — |
+| ≥ 0.8 | 軍事設施 | 高 |
+| 0.6 – 0.8 | 軍事設施 | 中 |
+| 0.4 – 0.6 | 不確定 | 低 |
+| < 0.4 | 非軍事 | — |
 
-## Google Colab Training
+## Google Colab 訓練
 
-Open `notebooks/colab_training.ipynb` in Colab with a T4 GPU runtime. The notebook handles Drive mounting, dependency installation, tiling, L1/L2 training, and session resume automatically.
+以 T4 GPU runtime 開啟 `notebooks/colab_training.ipynb`。Notebook 已內建 Drive 掛載、套件安裝、影像切割、L1/L2 訓練及斷線 resume 等完整流程。
 
-Estimated time on T4:
+T4 GPU 預估時間：
 
-| Step | Time |
+| 步驟 | 預估時間 |
 |---|---|
-| Tiling (CPU) | 30–60 min |
-| L1 training (100 epochs) | 2–4 hours |
-| Feature caching | 20–40 min |
-| L2 training (50 epochs) | 30–60 min |
+| 影像切割（CPU） | 30–60 分鐘 |
+| L1 訓練（100 epochs） | 2–4 小時 |
+| L1 特徵快取 | 20–40 分鐘 |
+| L2 訓練（50 epochs） | 30–60 分鐘 |
 
-## Model Details
+## 模型細節
 
 ### L1 — YOLOv11m
 
-| Parameter | Value |
+| 參數 | 設定值 |
 |---|---|
-| Base model | `yolo11m.pt` (COCO pretrained) |
-| Classes | aircraft, storage_tank, vehicle_lot, building |
-| Input size | 640 × 640 |
-| Frozen layers | 10 (during warmup) |
-| Augmentation | mosaic, flipud, 45° rotation, HSV jitter |
+| 基礎模型 | `yolo11m.pt`（COCO 預訓練） |
+| 偵測類別 | 航空器、儲油槽、車輛停放區、建築物 |
+| 輸入尺寸 | 640 × 640 |
+| 凍結層數 | 前 10 層（暖機階段） |
+| 資料增強 | mosaic、上下翻轉、45° 旋轉、HSV 色彩抖動 |
 
-### L2 — SatMAE ViT-Base + MLP Fusion
+### L2 — SatMAE ViT-Base + MLP 融合
 
-| Parameter | Value |
+| 參數 | 設定值 |
 |---|---|
-| Image backbone | `facebook/vit-mae-base` (swap for SatMAE when available) |
-| Structural input | 31-dim vector (class counts, spatial stats, confidence stats) |
-| Freeze schedule | Backbone frozen for first 5 epochs, then last 4 blocks unfrozen |
-| Loss | BCEWithLogitsLoss, pos_weight = 3.0 |
-| Backbone LR | 1e-5 |
-| Head LR | 1e-3 |
+| 影像骨幹 | `facebook/vit-mae-base`（可替換為 SatMAE 權重） |
+| 結構特徵輸入 | 31 維向量（類別計數、空間統計、信心統計） |
+| 凍結策略 | 前 5 epoch 凍結骨幹，之後解凍最後 4 個 block |
+| 損失函數 | BCEWithLogitsLoss，pos_weight = 3.0 |
+| 骨幹學習率 | 1e-5 |
+| 分類頭學習率 | 1e-3 |
 
-The 31-dim structural feature vector encodes:
-- 13 per-class detection counts and confidence means
-- 4 spatial distribution statistics (centroid, spread)
-- 13 confidence bucket counts
-- 1 total detection count
+31 維結構特徵向量組成：
+- 13 維：各類別偵測數量與平均信心值
+- 4 維：質心位置與空間分布統計
+- 13 維：信心值區間計數
+- 1 維：總偵測數量
 
-## Tests
+## 測試
 
 ```bash
 pytest
 ```
 
-42 tests, ~80 seconds.
+42 個測試，約 80 秒。
 
-## Dataset
+## 資料集
 
-This project uses [xView](http://xviewdataset.org) (DIUx, 2018), a satellite imagery dataset for object detection containing 1 million+ instances across 60 classes. Access requires registration and agreement to the xView Terms of Use.
+本專案使用 [xView](http://xviewdataset.org)（DIUx，2018），為包含 100 萬個以上標註實例、涵蓋 60 個類別的衛星影像物件偵測資料集。使用前需完成註冊並同意 xView 使用條款。
 
-## License
+## 授權
 
-For research use only. xView dataset usage is subject to the [xView Terms of Use](http://xviewdataset.org).
+僅供學術研究使用。xView 資料集使用須遵守 [xView 使用條款](http://xviewdataset.org)。
