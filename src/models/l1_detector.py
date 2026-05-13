@@ -16,13 +16,13 @@ except ImportError:  # pragma: no cover – ultralytics not installed in test en
 
 class L1Detector:
     """
-    Thin wrapper around YOLOv8.
+    Thin wrapper around YOLOv11.
     train() sets WANDB_PROJECT so ultralytics auto-logs to W&B.
     predict() returns normalized-coordinate Detection objects.
     """
 
     def __init__(self, checkpoint_path: Optional[str] = None):
-        model_path = checkpoint_path or "yolov8m.pt"
+        model_path = checkpoint_path or "yolo11m.pt"
         if YOLO is None:
             raise ImportError("ultralytics is required for L1Detector. Install with: pip install ultralytics")
         self.model = YOLO(model_path)
